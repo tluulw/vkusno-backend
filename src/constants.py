@@ -1,7 +1,7 @@
 from enum import Enum
 from typing import Annotated
 
-from sqlalchemy.orm import mapped_column
+from sqlalchemy.orm import mapped_column, relationship
 
 int_pk = Annotated[int, mapped_column(primary_key=True)]
 

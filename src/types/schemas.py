@@ -1,10 +1,10 @@
 from pydantic import BaseModel
 
 
-class AddTypeToItem(BaseModel):
-    item_title: str
-    categories_types: list[list]
+class TypeAdd(BaseModel):
+    title: str
+    category_id: int
 
 
-class AddTypesToItems(BaseModel):
-    items: list[AddTypeToItem]
+class ListTypeAdd(BaseModel):
+    types: list[TypeAdd]
