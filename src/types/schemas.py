@@ -2,7 +2,7 @@ from pydantic import BaseModel
 
 
 class TypeAdd(BaseModel):
-    title: str
+    title: str = 'default'  # default is for categories with 1 type
     category_id: int
 
 

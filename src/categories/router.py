@@ -24,21 +24,20 @@ async def add_category(category_to_add: CategoryAdd, session: AsyncSession = Dep
 
 @router.post("/add/many")
 async def add_many_categories(categories_to_add: ListCategoryAdd, session: AsyncSession = Depends(get_async_session)):
-    for category in categories_to_add.categories:
-        session.add(CategoryOrm(**category.model_dump()))
+    session.add_all([CategoryOrm(**category.model_dump()) for category in categories_to_add.categories])
     await session.commit()
 
     return JSONResponse(status_code=status.HTTP_201_CREATED, content={"message": "Categories were added"})
 
 
-@router.get("/category")
-async def get_category(session: AsyncSession = Depends(get_async_session)):
+@router.get("/all")
+async def get_all_categories(session: AsyncSession = Depends(get_async_session)):
     query = (select(CategoryOrm).options(selectinload(CategoryOrm.types)))
 
     categories = await session.execute(query)
     categories = categories.scalars().all()
+
     for category in categories:
-        for tip in category.types:
-            print(f"{category.title}: {tip.title}")
+        print(category, ',', sep='')
 
     return JSONResponse(status_code=status.HTTP_200_OK, content={"message": "Ok"})

@@ -6,6 +6,7 @@ from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.webdriver import ActionChains
 from selenium.webdriver.common.by import By
+from selenium.webdriver.support.wait import WebDriverWait
 
 driver = webdriver.Chrome()
 
@@ -48,7 +49,8 @@ EXTRA_PAGES = ['cuper-boks',
                'tolko-v-dostavke',
                'vygodno-dlya-megakompanii',
                'kombo-obed',
-               'sety-i-pary']
+               'sety-i-pary',
+               'zimniy-kombo']
 
 CATEGORIES = {'novinki': 'new',
               'populyarnoe': 'popular',
@@ -59,7 +61,7 @@ CATEGORIES = {'novinki': 'new',
               'deserty_2': 'dessert',
               'sousy': 'other'}
 
-TYPES = {'': None,
+TYPES = {'default': 'default',
          'Горячие напитки': 'hot',
          'Прохладительные напитки': 'cold',
          'Соки': 'juice',
@@ -76,9 +78,37 @@ TYPES = {'': None,
          'Мороженое': 'icecream',
          'Десерты': 'dessert'}
 
+TYPES_IDS = {
+    'new': {'default': 1},
+
+    'popular': {'default': 2},
+
+    'other': {'default': 3},
+
+    'drink': {'hot': 4,
+              'cold': 5,
+              'juice': 6,
+              'milkshake': 7},
+
+    'dessert': {'dessert': 8,
+                'icecream': 9},
+
+    'snack': {'salad': 10,
+              'starter': 11,
+              'fries': 12},
+
+    'cafe': {'dessert': 13,
+             'drink': 14},
+
+    'burger': {'chicken': 15,
+               'beef': 16,
+               'roll': 17,
+               'fish': 18}
+}
+
 items = []
 extra_titles = []
-items_categories = {}
+items_types = []
 
 
 async def get_extra_items(page):
@@ -104,10 +134,11 @@ async def get_extra_items(page):
                 extra_titles.append(tit)
 
 
-def parse(page, category=''):
+def parse(category, tip='default'):
     cards = driver.find_elements(By.CLASS_NAME, 'product-card')
 
     for card in cards:
+        ActionChains(driver).scroll_to_element(card).perform()
         size = card.find_element(By.CLASS_NAME, "product-card__footer").text
 
         title = card.find_element(By.CLASS_NAME, 'product-card__title').text
@@ -116,7 +147,7 @@ def parse(page, category=''):
             continue
         elif len(title_split) >= 2 and ',' in title_split[-2]:
             continue
-        elif 'Комбо' in title_split[0]:
+        elif 'Комбо' in title_split[0] or 'Пара' in title_split[0]:
             continue
         title = title.capitalize()
 
@@ -149,17 +180,15 @@ def parse(page, category=''):
                 item['price'] = int(item['price'])
 
                 if item not in items:
-
-                    items_categories[item['title']] = {'item_title': item['title'],
-                                                       "categories_types": [[CATEGORIES[page], TYPES[category]]]}
+                    print('added', end='=    ')
                     items.append(item)
 
-                else:
+                items_types.append({"item_id": items.index(item) + 1,
+                                    "type_id": TYPES_IDS[CATEGORIES[category]][TYPES[tip]]
+                                    })
 
-                    if items_categories[item['title']]['categories_types'][-1] != [CATEGORIES[page], TYPES[category]]:
-                        items_categories[item['title']]['categories_types'].append([CATEGORIES[page], TYPES[category]])
-
-                print(items_categories[item['title']], end='\n')
+                print(f""
+                      f"{item['title']}, type_id: {TYPES_IDS[CATEGORIES[category]][TYPES[tip]]}, id: {items.index(item) + 1}")
 
         else:
             item = {'title': title,
@@ -174,17 +203,15 @@ def parse(page, category=''):
             item['price'] = int(item['price'])
 
             if item not in items:
-
-                items_categories[item['title']] = {'item_title': item['title'],
-                                                   "categories_types": [[CATEGORIES[page], TYPES[category]]]}
+                print('added', end='=    ')
                 items.append(item)
 
-            else:
+            items_types.append({"item_id": items.index(item) + 1,
+                                "type_id": TYPES_IDS[CATEGORIES[category]][TYPES[tip]]
+                                })
 
-                if items_categories[item['title']]['categories_types'][-1] != [CATEGORIES[page], TYPES[category]]:
-                    items_categories[item['title']]['categories_types'].append([CATEGORIES[page], TYPES[category]])
-
-            print(items_categories[item['title']], end='\n')
+            print(
+                f"{item['title']}, type_id: {TYPES_IDS[CATEGORIES[category]][TYPES[tip]]}, id: {items.index(item) + 1}")
 
         close.click()
         time.sleep(1)
@@ -204,37 +231,45 @@ async def get_pages():
 async def main():
     await asyncio.gather(*[get_extra_items(page) for page in EXTRA_PAGES])
 
-    pages = await get_pages()
+    categories = await get_pages()
 
-    for page in pages[:1]:
-        if page == 'zavtrak':
+    for category in categories[2:]:
+        if category == 'zavtrak':
             continue
 
-        print('###', page.upper())
+        print('###', category.upper())
 
-        driver.get(url + page)
+        driver.get(url + category)
         time.sleep(5)
 
-        categories = driver.find_element(By.CLASS_NAME, 'menu-subcategories')
-        categories = categories.find_elements(By.CLASS_NAME, 'font-type-6')
+        types = driver.find_element(By.CLASS_NAME, 'menu-subcategories')
+        types = types.find_elements(By.CLASS_NAME, 'font-type-6')
+        wait = WebDriverWait(driver, timeout=4)
 
-        if categories:
-            for category in categories[1:]:
-                print('#####', category.text.upper())
-                ActionChains(driver).scroll_to_element(category).perform()
-                category.click()
+        if types:
+            for tip in types[1:]:
+                if 'Комбо' in tip.text.split(' ')[0]:
+                    continue
+                elif 'Боксы' in tip.text:
+                    continue
+                print('#####', TYPES[tip.text], TYPES_IDS[CATEGORIES[category]][TYPES[tip.text]])
+
+                ActionChains(driver).scroll_by_amount(0, -3000).perform()
+                wait.until(lambda d: tip.is_displayed())
+
+                tip.click()
                 time.sleep(5)
 
-                parse(page, category.text)
+                parse(category, tip.text)
         else:
-            parse(page)
-
-    # async with httpx.AsyncClient() as session:
-    #     await session.post('http://localhost:8000/items/add/many', json={'items': items})
+            parse(category)
 
     async with httpx.AsyncClient() as session:
-        await session.post('http://localhost:8000/types/add/many',
-                           json={"items": list(items_categories.values())})
+        await session.post('http://localhost:8000/items/add/many', json={'items': items})
+
+    async with httpx.AsyncClient() as session:
+        await session.post('http://localhost:8000/items/add/types',
+                           json={"items": items_types})
 
 
 if __name__ == '__main__':

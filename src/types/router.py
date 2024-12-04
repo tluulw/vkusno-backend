@@ -24,20 +24,7 @@ async def add_types_to_items(type_to_add: TypeAdd, session: AsyncSession = Depen
 
 @router.post("/add/many")
 async def add_many_types(types_to_add: ListTypeAdd, session: AsyncSession = Depends(get_async_session)):
-    for tip in types_to_add.types:
-        session.add(TypeOrm(**tip.model_dump()))
+    session.add_all([TypeOrm(**tip.model_dump()) for tip in types_to_add.types])
     await session.commit()
 
     return JSONResponse(status_code=status.HTTP_201_CREATED, content={"message": "Types were added"})
-
-
-@router.get("/type")
-async def get_type(session: AsyncSession = Depends(get_async_session)):
-    query = (select(TypeOrm).options(joinedload(TypeOrm.category)))
-
-    types = await session.execute(query)
-    types = types.scalars().all()
-    for tip in types:
-        print(f"{tip.title}: {tip.category.title}")
-
-    return JSONResponse(status_code=status.HTTP_200_OK, content={"message": "Ok"})

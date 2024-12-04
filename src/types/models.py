@@ -6,9 +6,14 @@ from src.database import Base
 
 
 class TypeOrm(Base):
-    __tablename__ = 'type'
+    __tablename__ = "type"
     id: Mapped[int_pk]
     title: Mapped[str]
     category_id: Mapped[int] = mapped_column(ForeignKey("category.id", ondelete="CASCADE"))
 
     category: Mapped["CategoryOrm"] = relationship(back_populates="types")
+
+    items: Mapped[list["ItemOrm"]] = relationship(
+        back_populates="types",
+        secondary="item_type"
+    )
