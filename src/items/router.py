@@ -1,11 +1,13 @@
+import json
+
 from fastapi import APIRouter, Depends, status
 from fastapi.responses import JSONResponse
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload, joinedload
+from sqlalchemy.orm import selectinload
 
 from src.database import get_async_session
-from src.items.models import ItemOrm, ItemTypeOrm
+from src.items.models import ItemOrm, ItemTypeOrm, ItemSizeOrm
 from src.items.schemas import ItemAdd, ListItemAdd, ItemTypeAdd, ListItemTypeAdd
 from src.types.models import TypeOrm
 
@@ -82,10 +84,62 @@ async def get_all_items(session: AsyncSession = Depends(get_async_session)):
     items = await session.execute(query)
     items = items.scalars().all()
 
-    for item in items:
-        print('')
-        print(item, end=', ')
-        for tip in item.types:
-            print(tip.title, tip.category.title, end=', ')
-
     return JSONResponse(status_code=status.HTTP_200_OK, content={"message": "Ok"})
+
+
+@router.get("/from_json")
+async def get_items_from_json():
+    with open('menu.json', 'r', encoding="UTF-8") as file:
+        data = json.load(file)
+
+    return JSONResponse(status_code=status.HTTP_200_OK, content={"items": data["items"]})
+
+
+@router.post("/add/from_json")
+async def add_items_from_json(session: AsyncSession = Depends(get_async_session)):
+    with open('menu.json', 'r', encoding="UTF-8") as file:
+        data = json.load(file)
+        data = data["items"]
+
+        for elem in data:
+
+            titles = await session.execute(select(ItemOrm.title))
+            titles = titles.scalars().all()
+
+            if elem['title'] not in titles:
+                item = ItemOrm(title=elem['title'])
+                session.add(item)
+                await session.flush()
+
+            else:
+                item = await session.execute(select(ItemOrm).filter_by(title=elem['title']))
+                item = item.scalars().first()
+
+            session.add(ItemSizeOrm(item_id=item.id,
+                                    image=elem['image'],
+                                    description=elem['description'],
+                                    price=elem['price'],
+                                    size=elem['size']
+                                    ))
+
+    await session.commit()
+
+    return JSONResponse(status_code=status.HTTP_201_CREATED, content={"message": 'Items were added'})
+
+
+@router.post("/add/types/from_json")
+async def add_items_to_types_from_json(session: AsyncSession = Depends(get_async_session)):
+    with open('types.json', 'r', encoding="UTF-8") as file:
+        data = json.load(file)
+
+        for item_title, list_of_type_ids in data.items():
+            item_id = await session.execute(select(ItemOrm.id).filter_by(title=item_title))
+            item_id = item_id.scalars().first()
+
+            for type_id in list_of_type_ids:
+                session.add(ItemTypeOrm(item_id=item_id,
+                                        type_id=type_id))
+
+    await session.commit()
+
+    return JSONResponse(status_code=status.HTTP_201_CREATED, content={"message": "Items were added to types"})

@@ -1,7 +1,7 @@
+import json
+
 from fastapi import APIRouter, Depends, status
 from fastapi.responses import JSONResponse
-from sqlalchemy import select
-from sqlalchemy.orm import joinedload
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.database import get_async_session
@@ -28,3 +28,11 @@ async def add_many_types(types_to_add: ListTypeAdd, session: AsyncSession = Depe
     await session.commit()
 
     return JSONResponse(status_code=status.HTTP_201_CREATED, content={"message": "Types were added"})
+
+
+@router.get("/from_json")
+async def get_from_json(session: AsyncSession = Depends(get_async_session)):
+    with open('types.json', 'r', encoding="UTF-8") as file:
+        data = json.load(file)
+
+    return JSONResponse(status_code=status.HTTP_200_OK, content={"types": data})

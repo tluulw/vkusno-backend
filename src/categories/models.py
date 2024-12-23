@@ -12,11 +12,3 @@ class CategoryOrm(Base):
     types: Mapped[list["TypeOrm"]] = relationship(
         back_populates="category"
     )
-
-    def __repr__(self):
-        dct = {}
-
-        for el in self.types:
-            dct[el.title] = el.id
-
-        return f"'{self.title}': {dct}"

@@ -1,12 +1,12 @@
 from fastapi import APIRouter, Depends, status
 from fastapi.responses import JSONResponse
 from sqlalchemy import select
-from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
-from src.database import get_async_session
 from src.categories.models import CategoryOrm
-from src.categories.schemas import CategoryAdd, ListCategoryAdd
+from src.categories.schemas import CategoryAdd, ListCategoryAdd, ListCategoryShow, CategoryShow
+from src.database import get_async_session
 
 router = APIRouter(
     prefix="/categories",
@@ -36,8 +36,9 @@ async def get_all_categories(session: AsyncSession = Depends(get_async_session))
 
     categories = await session.execute(query)
     categories = categories.scalars().all()
+    categories = ListCategoryShow(categories=[CategoryShow(
+        id=category.id,
+        title=category.title
+    ) for category in categories])
 
-    for category in categories:
-        print(category, ',', sep='')
-
-    return JSONResponse(status_code=status.HTTP_200_OK, content={"message": "Ok"})
+    return JSONResponse(status_code=status.HTTP_200_OK, content={"categories": categories.model_dump()})

@@ -7,3 +7,12 @@ class CategoryAdd(BaseModel):
 
 class ListCategoryAdd(BaseModel):
     categories: list[CategoryAdd]
+
+
+class CategoryShow(BaseModel):
+    id: int
+    title: str
+
+
+class ListCategoryShow(BaseModel):
+    categories: list[CategoryShow]

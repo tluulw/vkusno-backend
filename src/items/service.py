@@ -17,16 +17,3 @@ async def item_serialize(position: ItemAdd):
     # position.image = src  # src to image in s3
 
     return position
-
-
-async def upload_items_to_json(items: list):
-    json_with_items = {}
-
-    for item in items:
-        json_with_items[item[0]] = {'title': item[1],
-                                    'image': item[2],
-                                    'description': item[3],
-                                    'price': item[4],
-                                    'size': item[5]}
-
-    return json_with_items
