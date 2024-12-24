@@ -7,6 +7,8 @@ from sqlalchemy import pool
 from src.config import settings
 from src.items.models import *  # noqa
 from src.types.models import *  # noqa
+from src.items_sizes.models import *  # noqa
+from src.items_types.models import *  # noqa
 from src.categories.models import *  # noqa
 from src.database import Base  # noqa
 

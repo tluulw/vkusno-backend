@@ -1,18 +1,20 @@
-from pydantic import BaseModel
+from src.schemas import CustomBaseModel
 
 
-class CategoryAdd(BaseModel):
+class CategoryBase(CustomBaseModel):
     title: str
 
 
-class ListCategoryAdd(BaseModel):
-    categories: list[CategoryAdd]
+class CategoryAdd(CategoryBase):
+    pass
 
 
-class CategoryShow(BaseModel):
+class CategoryDTO(CategoryBase):
     id: int
-    title: str
+
+    class Config:
+        from_attributes = True
 
 
-class ListCategoryShow(BaseModel):
-    categories: list[CategoryShow]
+class CategoryDelete(CustomBaseModel):
+    id: int

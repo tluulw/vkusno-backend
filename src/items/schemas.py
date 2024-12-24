@@ -1,36 +1,21 @@
-from pydantic import BaseModel
+from src.schemas import CustomBaseModel
 
 
-class ItemAdd(BaseModel):
+class ItemBase(CustomBaseModel):
     title: str
-
-
-class ItemSizeAdd(BaseModel):
-    item_id: int
-    title: str
-    image: str
     description: str
-    price: int
-    size: str
 
 
-class ListItemAdd(BaseModel):
-    items: list[ItemAdd]
+class ItemAdd(ItemBase):
+    pass
 
 
-class ListItemSizeAdd(BaseModel):
-    items: list[ItemSizeAdd]
-
-
-class ItemTypeAdd(BaseModel):
-    item_id: int
-    type_id: int
-
-
-class ListItemTypeAdd(BaseModel):
-    items: list[ItemTypeAdd]
-
-
-class ItemShow(BaseModel):
+class ItemDTO(ItemBase):
     id: int
-    title: str
+
+    class Config:
+        from_attributes = True
+
+
+class ItemDelete(CustomBaseModel):
+    id: int
