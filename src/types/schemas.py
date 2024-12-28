@@ -1,3 +1,4 @@
+from src.items.schemas import ItemDTO
 from src.schemas import CustomBaseModel
 
 
@@ -19,3 +20,10 @@ class TypeDTO(TypeBase):
 
 class TypeDelete(CustomBaseModel):
     id: int
+
+
+class TypeWithItemsDTO(TypeDTO):
+    items: list[ItemDTO]
+
+    class Config:
+        from_attributes = True

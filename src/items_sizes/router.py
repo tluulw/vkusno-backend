@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.database import get_async_session
 from src.items_sizes.models import ItemSizeOrm
 from src.items_sizes.schemas import ItemSizeAdd, ItemSizeDTO, ItemSizeDelete
+from src.items_sizes.service import _add_sizes
 
 router = APIRouter(
     prefix="/items_sizes",
@@ -41,29 +42,20 @@ async def get_item_sizes(item_id: int, session: AsyncSession = Depends(get_async
 
 @router.post("/")
 async def add_size_to_item(size: ItemSizeAdd, session: AsyncSession = Depends(get_async_session)):
-    item_size = ItemSizeOrm(**size.model_dump())
-    session.add(item_size)
+    await _add_sizes([size], session)
 
     await session.commit()
-    await session.refresh(item_size)
 
-    return JSONResponse(status_code=status.HTTP_201_CREATED, content={"message": "Size was added to item",
-                                                                      "data": ItemSizeDTO.from_orm_to_json(item_size)})
+    return JSONResponse(status_code=status.HTTP_201_CREATED, content={"message": "Size was added to item"})
 
 
 @router.post("/many")
 async def add_many_sizes_to_items(sizes: list[ItemSizeAdd], session: AsyncSession = Depends(get_async_session)):
-    items_sizes = [ItemSizeOrm(**size.model_dump()) for size in sizes]
-    session.add_all(items_sizes)
+    await _add_sizes(sizes, session)
 
     await session.commit()
-    [await session.refresh(item_size) for item_size in items_sizes]
 
-    return JSONResponse(status_code=status.HTTP_201_CREATED, content={"message": "Sizes were added to items",
-                                                                      "data": [
-                                                                          ItemSizeDTO.from_orm_to_json(item_size)
-                                                                          for item_size in items_sizes
-                                                                      ]})
+    return JSONResponse(status_code=status.HTTP_201_CREATED, content={"message": "Sizes were added to items"})
 
 
 @router.delete("/")

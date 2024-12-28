@@ -43,10 +43,8 @@ async def add_item_to_type(item_type_add: ItemTypeAdd, session: AsyncSession = D
     session.add(item_type)
 
     await session.commit()
-    await session.refresh(item_type)
 
-    return JSONResponse(status_code=status.HTTP_201_CREATED, content={"message": "Item was added to type",
-                                                                      "data": ItemTypeDTO.from_orm_to_json(item_type)})
+    return JSONResponse(status_code=status.HTTP_201_CREATED, content={"message": "Item was added to type"})
 
 
 @router.post("/many")
@@ -56,13 +54,8 @@ async def add_many_items_to_many_types(items_types_add: list[ItemTypeAdd],
     session.add_all(items_types)
 
     await session.commit()
-    [await session.refresh(item_type) for item_type in items_types]
 
-    return JSONResponse(status_code=status.HTTP_201_CREATED, content={"message": "Items were added to types",
-                                                                      "data": [
-                                                                          ItemTypeDTO.from_orm_to_json(item_type)
-                                                                          for item_type in items_types
-                                                                      ]})
+    return JSONResponse(status_code=status.HTTP_201_CREATED, content={"message": "Items were added to types"})
 
 
 @router.delete("/")

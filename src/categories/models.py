@@ -10,5 +10,6 @@ class CategoryOrm(Base):
     title: Mapped[str] = mapped_column(unique=True)
 
     types: Mapped[list["TypeOrm"]] = relationship(
-        back_populates="category"
+        back_populates="category",
+        cascade='all, delete'
     )

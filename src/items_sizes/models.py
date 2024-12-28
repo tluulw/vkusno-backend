@@ -1,5 +1,5 @@
 from sqlalchemy import ForeignKey
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.database import Base
 
@@ -10,3 +10,7 @@ class ItemSizeOrm(Base):
     image: Mapped[str]
     price: Mapped[int]
     size: Mapped[str] = mapped_column(primary_key=True)
+
+    item: Mapped["ItemOrm"] = relationship(
+        back_populates="sizes"
+    )

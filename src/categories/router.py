@@ -2,7 +2,6 @@ from fastapi import APIRouter, Depends, status
 from fastapi.responses import JSONResponse
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
 
 from src.categories.models import CategoryOrm
 from src.categories.schemas import CategoryAdd, CategoryDTO, CategoryDelete
@@ -16,9 +15,7 @@ router = APIRouter(
 
 @router.get("/")
 async def get_all_categories(session: AsyncSession = Depends(get_async_session)):
-    query = (select(CategoryOrm).options(selectinload(CategoryOrm.types)))
-
-    categories = await session.execute(query)
+    categories = await session.execute(select(CategoryOrm))
     categories = categories.scalars().all()
 
     return JSONResponse(status_code=status.HTTP_200_OK, content={"message": "Ok",
@@ -41,12 +38,8 @@ async def add_category(category_to_add: CategoryAdd, session: AsyncSession = Dep
     category = CategoryOrm(**category_to_add.model_dump())
     session.add(category)
     await session.commit()
-    await session.refresh(category)
 
-    return JSONResponse(status_code=status.HTTP_201_CREATED, content={"message": "Category was added",
-                                                                      "data":
-                                                                          (CategoryDTO.from_orm_to_json(category))
-                                                                      })
+    return JSONResponse(status_code=status.HTTP_201_CREATED, content={"message": "Category was added"})
 
 
 @router.post("/many")
@@ -54,14 +47,8 @@ async def add_many_categories(categories_to_add: list[CategoryAdd], session: Asy
     categories = [CategoryOrm(**category.model_dump()) for category in categories_to_add]
     session.add_all(categories)
     await session.commit()
-    await session.refresh(categories)
 
-    return JSONResponse(status_code=status.HTTP_201_CREATED, content={"message": "Categories were added",
-                                                                      "data": [
-                                                                          (CategoryDTO
-                                                                           .from_orm_to_json(category))
-                                                                          for category in categories
-                                                                      ]})
+    return JSONResponse(status_code=status.HTTP_201_CREATED, content={"message": "Categories were added"})
 
 
 @router.delete("/")
