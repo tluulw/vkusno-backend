@@ -9,7 +9,7 @@ class TypeOrm(Base):
     __tablename__ = "type"
     id: Mapped[int_pk]
     title: Mapped[str]
-    category_id: Mapped[int] = mapped_column(ForeignKey("category.id", ondelete="CASCADE"))
+    category_id: Mapped[int] = mapped_column(ForeignKey("category.id", ondelete="CASCADE", onupdate="CASCADE"))
 
     category: Mapped["CategoryOrm"] = relationship(back_populates="types")
 

@@ -1,4 +1,5 @@
 from src.schemas import CustomBaseModel
+from src.types.schemas import TypeWithItemsDTO
 
 
 class CategoryBase(CustomBaseModel):
@@ -18,3 +19,10 @@ class CategoryDTO(CategoryBase):
 
 class CategoryDelete(CustomBaseModel):
     id: int
+
+
+class CategoriesWithItemsDTO(CategoryDTO):
+    types: list[TypeWithItemsDTO]
+
+    class Config:
+        from_attributes = True

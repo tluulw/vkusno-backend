@@ -2,12 +2,10 @@ from fastapi import APIRouter, Depends, status
 from fastapi.responses import JSONResponse
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
 
 from src.database import get_async_session
-from src.items.models import ItemOrm
 from src.types.models import TypeOrm
-from src.types.schemas import TypeAdd, TypeDTO, TypeDelete, TypeWithItemsDTO
+from src.types.schemas import TypeAdd, TypeDTO, TypeDelete
 
 router = APIRouter(
     prefix="/types",
@@ -33,35 +31,6 @@ async def get_type(type_id: int, session: AsyncSession = Depends(get_async_sessi
 
     return JSONResponse(status_code=status.HTTP_200_OK, content={"message": "Ok",
                                                                  "data": TypeDTO.from_orm_to_json(tip)})
-
-
-@router.get("/items_from_type/{type_id}")
-async def get_items_from_type(type_id: int, session: AsyncSession = Depends(get_async_session)):
-    query = (select(TypeOrm)
-             .filter_by(id=type_id)
-             .options(selectinload(TypeOrm.items).selectinload(ItemOrm.sizes))
-             )
-    tip = await session.execute(query)
-    tip = tip.scalars().first()
-
-    return JSONResponse(status_code=status.HTTP_200_OK, content={"message": "Ok",
-                                                                 "data": TypeWithItemsDTO.from_orm_to_json(tip)})
-
-
-@router.get("/items_from_category/{category_id}")
-async def get_items_from_category(category_id: int, session: AsyncSession = Depends(get_async_session)):
-    query = (select(TypeOrm)
-             .filter_by(category_id=category_id)
-             .options(selectinload(TypeOrm.items).selectinload(ItemOrm.sizes))
-             )
-    types = await session.execute(query)
-    types = types.scalars().all()
-
-    return JSONResponse(status_code=status.HTTP_200_OK, content={"message": "Ok",
-                                                                 "data": [
-                                                                     TypeWithItemsDTO.from_orm_to_json(tip)
-                                                                     for tip in types
-                                                                 ]})
 
 
 @router.post("/")

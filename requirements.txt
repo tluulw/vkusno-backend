@@ -3,6 +3,5 @@ fastapi[standard]
 alembic
 sqlalchemy[asyncio]
 asyncpg
-
-beautifulsoup4
-selenium
+pydantic-settings
+redis

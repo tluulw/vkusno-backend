@@ -11,33 +11,39 @@ from src.items_sizes.service import _add_sizes
 # Получить определённый item
 async def _get_item(session, item_id: int):
     # Функция принимает сессию, id item'а, отдаёт нужный item
-    item = await session.execute(
+    item = await session.scalars(
         select(ItemOrm)
         .filter_by(id=item_id)
         .options(selectinload(ItemOrm.sizes))
     )
-    return item.scalars().first()
+    return item.first()
 
 
 # Получить несколько определённых item'ов
 async def _get_items(session, item_ids: list[int]):
     # Функция принимает сессию, id item'ов в списке, отдаёт список из item'ов с нужными id
-    item = await session.execute(
+    items = await session.scalars(
         select(ItemOrm)
         .filter(ItemOrm.id.in_(item_ids))
         .options(selectinload(ItemOrm.sizes))
     )
-    return item.scalars().all()
+    return items.all()
 
 
 # Получить все items
 async def _get_all_items(session):
     # Функция принимает сессию, отдаёт список из всех item'ов
-    items = await session.execute(
+    items = await session.scalars(
         select(ItemOrm)
         .options(selectinload(ItemOrm.sizes))
+        .options(selectinload(ItemOrm.types))
     )
-    return items.scalars().all()
+
+    items = items.all()
+    for item in items:
+        item.sizes.sort(key=lambda size: size.price)
+
+    return items
 
 
 # Добавляем item'ы в сессию
